@@ -1,3 +1,4 @@
+/*sera usado alterado e usado como base futuramente para funcionamento do site juntamente com hardware 
 /* ============================================================
  *  Monitoramento da Água — Firmware de exemplo para ESP32
  *  Lê o sensor de pH, verifica a energia e envia ao Firebase.
