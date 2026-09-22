@@ -1,8 +1,4 @@
-// ============================================================
-//  Service Worker — habilita instalação (PWA) e notificações.
-//  Necessário para o iPhone poder mostrar notificações quando o
-//  site é adicionado à Tela de Início (iOS 16.4+).
-// ============================================================
+// Parte do codigo para add a tela de inicio do telefone assim podera chegar notifcações de alerta
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -12,7 +8,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Ao tocar na notificação, foca a janela do app (ou abre uma nova).
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(
@@ -25,8 +21,6 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
-// Suporte a push remoto (para o futuro, com FCM/VAPID + servidor).
-// Sem um servidor enviando, este evento simplesmente não dispara.
 self.addEventListener("push", (event) => {
   let dados = {};
   try { dados = event.data ? event.data.json() : {}; } catch (e) {}
