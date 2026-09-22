@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitoramento da Água — pH e Energia</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%A7%3C/text%3E%3C/svg%3E" />
+
+  <!-- PWA / iPhone: permite adicionar à Tela de Início e receber notificações -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Monitor pH" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="titulo">
+        <h1>💧 Monitoramento da Água</h1>
+        <p>Sistema de monitoramento de pH e energia — Arquitetura de Computadores</p>
+      </div>
+      <div class="conexao">
+        <span id="conexaoBadge" class="badge badge-off">
+          <span class="dot"></span><span id="conexaoTexto">Conectando…</span>
+        </span>
+        <span id="ultimaAtualizacao" class="ultima">—</span>
+        <button id="btnNotificacoes" class="btn-notif" type="button">🔔 Ativar notificações</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <nav class="tabs">
+      <button class="tab ativo" data-view="painel" type="button">📊 Painel</button>
+      <button class="tab" data-view="config" type="button">⚙️ Configurações</button>
+    </nav>
+
+    <div id="viewPainel" class="view">
+    <!-- Cartões de status -->
+    <section class="dashboard" aria-label="Painel de status">
+      <article class="card" id="cardPh">
+        <h2>pH da Água</h2>
+        <div class="valor" id="valorPh">--</div>
+        <p id="statusPh">Aguardando leitura…</p>
+        <div class="escala-ph" title="Escala de pH de 0 a 14">
+          <div class="escala-faixa"></div>
+          <div class="escala-marcador" id="marcadorPh"></div>
+          <div class="escala-legenda">
+            <span>0</span><span>7</span><span>14</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" id="cardEnergia">
+        <h2>Energia Elétrica</h2>
+        <div class="valor" id="statusEnergia">--</div>
+        <p id="energiaMensagem">Aguardando leitura…</p>
+        <div class="icone" id="iconeEnergia">⚡</div>
+      </article>
+
+      <article class="card" id="cardOxigenacao">
+        <h2>Oxigenação</h2>
+        <div class="valor" id="statusOxigenacao">--</div>
+        <p id="oxigenacaoMensagem">Aguardando leitura…</p>
+        <div class="icone" id="iconeOxigenacao">🫧</div>
+      </article>
+    </section>
+
+    <!-- Alerta -->
+    <section class="alerta" id="alerta">
+      <h2>Status do Sistema</h2>
+      <p id="mensagemAlerta">Aguardando dados do sensor…</p>
+    </section>
+
+    <!-- Gráfico de pH -->
+    <section class="painel">
+      <div class="painel-head">
+        <h2>Histórico de pH</h2>
+        <span class="legenda-faixa">Faixa aceitável: <strong>6.5 – 8.5</strong></span>
+      </div>
+      <div class="grafico-wrap">
+        <canvas id="graficoPh"></canvas>
+      </div>
+    </section>
+
+    <!-- Tabela de leituras -->
+    <section class="painel">
+      <div class="painel-head">
+        <h2>Últimas leituras</h2>
+        <button class="btn-sec" id="limparHistorico" type="button">Limpar histórico</button>
+      </div>
+      <div class="tabela-wrap">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>pH</th>
+              <th>Energia</th>
+              <th>Oxigenação</th>
+              <th>Situação</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabela">
+            <tr class="vazio"><td colspan="5">Nenhuma leitura registrada ainda.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Simulador -->
+    <section class="controle">
+      <h2>Simulador (teste sem hardware)</h2>
+      <p class="controle-desc">
+        Os botões gravam os valores no Firebase, simulando o ESP32. O painel acima
+        reage em tempo real ao que está no banco de dados.
+      </p>
+
+      <div class="controle-linha">
+        <label for="sliderPh">pH manual: <strong id="sliderValor">7.0</strong></label>
+        <input type="range" id="sliderPh" min="0" max="14" step="0.1" value="7.0" />
+        <button id="enviarPh" type="button">Enviar pH</button>
+      </div>
+
+      <div class="controle-botoes">
+        <button id="btnPhBaixo" type="button">pH baixo (5.5)</button>
+        <button id="btnPhNormal" type="button">pH normal (7.2)</button>
+        <button id="btnPhAlto" type="button">pH alto (9.2)</button>
+        <button id="btnFaltaEnergia" type="button" class="btn-warn">Simular falta de energia</button>
+        <button id="btnEnergiaNormal" type="button" class="btn-ok">Restaurar energia</button>
+      </div>
+
+      <div class="controle-linha">
+        <button id="btnAuto" type="button" class="btn-sec">▶ Iniciar simulação automática do ESP32</button>
+        <span class="controle-hint">Gera uma leitura variando a cada 3&nbsp;segundos.</span>
+      </div>
+    </section>
+    </div><!-- /viewPainel -->
+
+    <!-- Aba de Configurações (salva no próprio aparelho, sem login) -->
+    <div id="viewConfig" class="view" hidden>
+      <section class="painel">
+        <div class="painel-head"><h2>⚙️ Configurações de notificação</h2></div>
+        <p class="controle-desc">
+          Estas preferências ficam salvas só neste aparelho/navegador (não precisa de login).
+          Para receber os avisos, as notificações precisam estar ativadas no botão
+          <strong>🔔</strong> do topo da página.
+        </p>
+
+        <div class="config-item">
+          <label class="config-switch" for="cfgPhBaixoAtivo">
+            <input type="checkbox" id="cfgPhBaixoAtivo" />
+            <span>Notificar quando o pH ficar <strong>abaixo de</strong></span>
+          </label>
+          <input type="number" id="cfgPhBaixo" class="config-num" min="0" max="14" step="0.1" value="6.5" />
+        </div>
+
+        <div class="config-item">
+          <label class="config-switch" for="cfgPhAltoAtivo">
+            <input type="checkbox" id="cfgPhAltoAtivo" />
+            <span>Notificar quando o pH ficar <strong>acima de</strong></span>
+          </label>
+          <input type="number" id="cfgPhAlto" class="config-num" min="0" max="14" step="0.1" value="8.5" />
+        </div>
+
+        <div class="config-item">
+          <label class="config-switch" for="cfgEnergia">
+            <input type="checkbox" id="cfgEnergia" />
+            <span>Notificar quando <strong>faltar energia</strong></span>
+          </label>
+        </div>
+
+        <div class="config-item">
+          <label class="config-switch" for="cfgNormalizado">
+            <input type="checkbox" id="cfgNormalizado" />
+            <span>Notificar quando tudo <strong>voltar ao normal</strong></span>
+          </label>
+        </div>
+
+        <div class="config-acoes">
+          <button id="btnTesteNotif" type="button" class="btn-sec">🔔 Enviar notificação de teste</button>
+          <button id="btnRestaurarCfg" type="button" class="btn-sec">↺ Restaurar padrão</button>
+        </div>
+        <p class="config-status" id="cfgStatus"></p>
+      </section>
+    </div><!-- /viewConfig -->
+  </main>
+
+  <footer>
+    <p>Projeto de Monitoramento de pH da Água • ESP32 + Firebase Realtime Database + Web</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Biblioteca de gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- Firebase (versão "compat" — funciona por script comum, sem servidor) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+  <!-- Configuração e lógica do sistema -->
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
